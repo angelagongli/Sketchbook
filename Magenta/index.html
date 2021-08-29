@@ -9,7 +9,9 @@
 </head>
 <body>
     <canvas id="sequenceCanvas" width="500" height="500"></canvas><br>
-    <canvas id="chordCanvas" width="500" height="500"></canvas>
+    <button onclick="startOrStop(event, sequencePlayer, TWINKLE_TWINKLE)">Play</button><br>
+    <canvas id="chordCanvas" width="500" height="500"></canvas><br>
+    <button onclick="startOrStop(event, chordPlayer, MAJOR_CHORD)">Play</button>
     <script>
         TWINKLE_TWINKLE = {
             notes: [
@@ -38,8 +40,48 @@
             ],
             totalTime: 1
         };
-        sequenceVisualization = new mm.PianoRollCanvasVisualizer(TWINKLE_TWINKLE, document.getElementById('sequenceCanvas'));
-        chordVisualization = new mm.PianoRollCanvasVisualizer(MAJOR_CHORD, document.getElementById('chordCanvas'));
+        sequenceConfig = {
+            noteHeight: 20,
+            pixelsPerTimeStep: 20,
+            noteSpacing: 2,
+            noteRGB: '100, 0, 100',
+            activeNoteRGB: '200, 0, 200'
+        };
+        chordConfig = {
+            noteHeight: 11,
+            pixelsPerTimeStep: 50,
+            noteSpacing: 1,
+            noteRGB: '0, 100, 100',
+            activeNoteRGB: '0, 200, 200'
+        };
+        sequenceVisualization = new mm.PianoRollCanvasVisualizer(TWINKLE_TWINKLE, document.getElementById('sequenceCanvas'), sequenceConfig);
+        chordVisualization = new mm.PianoRollCanvasVisualizer(MAJOR_CHORD, document.getElementById('chordCanvas'), chordConfig);
+        sequencePlayer = new mm.Player(false, {
+            run: note => sequenceVisualization.redraw(note),
+            stop: () => {
+                console.log('Done');
+            }
+        });
+        chordPlayer = new mm.Player(false, {
+            run: note => chordVisualization.redraw(note),
+            stop: () => {
+                console.log('Done');
+            }
+        });
+        function startOrStop(event, p, seq) {
+            if (p.isPlaying()) {
+                p.stop();
+                event.target.textContent = 'Play';
+            } else {
+                p.start(seq).then(() => {
+                    const btns = document.querySelectorAll('.controls > button');
+                    for (let btn of btns) {
+                        btn.textContent = 'Play';
+                    }
+                });
+                event.target.textContent = 'Stop';
+            }
+        }
     </script>
 </body>
 </html>
