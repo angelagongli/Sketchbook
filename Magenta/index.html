@@ -8,10 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.0.0"></script>
 </head>
 <body>
+    All from <a href="https://hello-magenta.glitch.me/">https://hello-magenta.glitch.me/</a><br>
     <canvas id="sequenceCanvas" width="500" height="500"></canvas><br>
     <button onclick="startOrStop(event, sequencePlayer, TWINKLE_TWINKLE)">Play</button><br>
     <canvas id="chordCanvas" width="500" height="500"></canvas><br>
-    <button onclick="startOrStop(event, chordPlayer, MAJOR_CHORD)">Play</button>
+    <button onclick="startOrStop(event, chordPlayer, MAJOR_CHORD)">Play</button><br>
+    <h1>MusicRNN</h1>
+    <p>"A MusicRNN is an LSTM-based language model for musical notes -- it is best at continuing a NoteSequence that you give it."</p>
+    <button onclick="playMusicRNN()">Play MusicRNN</button><br>
+    <h1>MusicVAE</h1>
+    <p>"A MusicVAE is a variational autoencoder made up of an Encoder and Decoder -- you can think of the encoder as trying to summarize all the data you give it, and the decoder as trying to recreate the original data, based on this summarized version."</p>
+    <button onclick="playVAE()">Play MusicVAE</button>
     <script>
         TWINKLE_TWINKLE = {
             notes: [
@@ -81,6 +88,50 @@
                 });
                 event.target.textContent = 'Stop';
             }
+        }
+
+        // MusicRNN
+        // Initialize the model.
+        music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+        music_rnn.initialize();
+
+        // Create a player to play the sequence we'll get from the model.
+        rnnPlayer = new mm.Player();
+
+        rnn_steps = 20;
+        rnn_temperature = 1.5;
+
+        function playMusicRNN() {
+            if (rnnPlayer.isPlaying()) {
+                rnnPlayer.stop();
+                return;
+            }
+                
+            // The model expects a quantized sequence, and ours was unquantized:
+            const qns = mm.sequences.quantizeNoteSequence(TWINKLE_TWINKLE, 4);
+            music_rnn
+            .continueSequence(qns, rnn_steps, rnn_temperature)
+            .then((sample) => rnnPlayer.start(sample));
+        }
+
+        // MusicVAE
+        // Initialize the model.
+        music_vae = new mm.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/mel_4bar_small_q2');
+        music_vae.initialize();
+
+        // Create a player to play the sampled sequence.
+        vaePlayer = new mm.Player();
+
+        vae_temperature = 1.5;
+
+        function playVAE() {
+            if (vaePlayer.isPlaying()) {
+                vaePlayer.stop();
+                return;
+            }
+            music_vae
+            .sample(1, vae_temperature)
+            .then((sample) => vaePlayer.start(sample[0]));
         }
     </script>
 </body>
